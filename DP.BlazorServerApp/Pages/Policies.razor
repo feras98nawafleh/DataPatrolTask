@@ -1,0 +1,82 @@
+﻿@page "/policies"
+@using MudBlazor
+@using DP.Core.Entities
+@using DP.Infrastructure.Data
+@inject AppDbContext DbContext
+@inject NavigationManager NavigationManager
+
+<MudContainer>
+    <MudText Typo="Typo.h4">Policies</MudText>
+    <MudTable Items="@PoliciesList" Hover="true">
+        <HeaderContent>
+            <MudTh>Name</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.PolicyName</MudTd>
+            <MudTd>
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="() => EditPolicy(context)" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="() => DeletePolicy(context)" />
+                <MudIconButton Icon="@Icons.Material.Filled.Group" OnClick="() => AssignToUserGroups(context)" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+    <MudButton OnClick="OpenCreateDialog" Color="Color.Primary">Create Policy</MudButton>
+</MudContainer>
+
+<MudDialog @ref="_createDialog">
+    <DialogContent>
+        <MudTextField @bind-Value="_newPolicyName" Label="Policy Name" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CreatePolicy" Color="Color.Primary">Create</MudButton>
+        <MudButton OnClick="CloseCreateDialog" Color="Color.Secondary">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private List<Policy> PoliciesList = new();
+    private MudDialog _createDialog;
+    private string _newPolicyName;
+
+    protected override void OnInitialized()
+    {
+        PoliciesList = DbContext.Policies.ToList();
+    }
+
+    private async void OpenCreateDialog()
+    {
+        _newPolicyName = string.Empty;
+        await _createDialog.ShowAsync();
+    }
+
+    private async void CloseCreateDialog()
+    {
+        await _createDialog.CloseAsync();
+    }
+
+    private async void CreatePolicy()
+    {
+        var newPolicy = new Policy { PolicyName = _newPolicyName };
+        DbContext.Policies.Add(newPolicy);
+        DbContext.SaveChanges();
+        PoliciesList = DbContext.Policies.ToList();
+        await _createDialog.CloseAsync();
+    }
+
+    private void EditPolicy(Policy policy)
+    {
+    }
+
+    private void DeletePolicy(Policy policy)
+    {
+        DbContext.Policies.Remove(policy);
+        DbContext.SaveChanges();
+        PoliciesList = DbContext.Policies.ToList();
+    }
+
+    private void AssignToUserGroups(Policy policy)
+    {
+        NavigationManager.NavigateTo($"/assign-policies/{policy.PolicyId}");
+    }
+}

@@ -1,0 +1,51 @@
+﻿@using DP.Core.Entities
+@using DP.Infrastructure.Data
+@using MudBlazor
+@inject AppDbContext DbContext
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.h6">Add New User</MudText>
+        <MudGrid>
+            <MudItem xs="12">
+                <MudTextField Label="User ID" @bind-Value="userId" Variant="Variant.Text" Required="true" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField Label="Username" @bind-Value="username" Variant="Variant.Text" Required="true" />
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Ok</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    private string userId;
+    private string username;
+
+    private async Task Submit()
+    {
+        var newUser = new User
+            {
+                UserId = userId,
+                Username = username,
+                IsEnabled = true
+            };
+
+        await AddNewUser(newUser);
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task AddNewUser(User user)
+    {
+        DbContext.Users.Add(user);
+        await DbContext.SaveChangesAsync();
+    }
+}

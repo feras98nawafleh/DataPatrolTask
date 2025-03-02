@@ -1,0 +1,88 @@
+﻿@page "/user-requests"
+@using MudBlazor
+@using DP.Core.Entities
+@using DP.Infrastructure.Data
+@inject AppDbContext DbContext
+@inject NavigationManager NavigationManager
+
+<MudContainer>
+    <MudText Typo="Typo.h4">User Requests</MudText>
+    <MudTable Items="@UserRequestsList" Hover="true">
+        <HeaderContent>
+            <MudTh>RequestId</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.Description</MudTd>
+            <MudTd>
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="() => EditRequest(context)" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="() => DeleteRequest(context)" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+    <MudButton OnClick="OpenCreateDialog" Color="Color.Primary">Create Request</MudButton>
+</MudContainer>
+
+<MudDialog @ref="_createDialog">
+    <DialogContent>
+        <MudTextField @bind-Value="_newRequestDescription" Label="Request Description" />
+        <MudSelect T="int" @bind-Value="_selectedUserId" Label="Select User">
+            @foreach (var user in DbContext.Users)
+            {
+                <MudSelectItem Value="@user.UserId">@user.Username</MudSelectItem>
+            }
+        </MudSelect>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CreateRequest" Color="Color.Primary">Create</MudButton>
+        <MudButton OnClick="CloseCreateDialog" Color="Color.Secondary">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private List<UserRequest> UserRequestsList = new();
+    private MudDialog _createDialog;
+    private string _newRequestDescription;
+    private int _selectedUserId;
+
+    protected override void OnInitialized()
+    {
+        UserRequestsList = DbContext.UserRequests.Where(r => r.RequestedBy == "string").ToList();
+    }
+
+    private async void OpenCreateDialog()
+    {
+        _newRequestDescription = string.Empty;
+        _selectedUserId = 0;
+        await _createDialog.ShowAsync();
+    }
+
+    private async void CloseCreateDialog()
+    {
+        await _createDialog.CloseAsync();
+    }
+
+    private async void CreateRequest()
+    {
+        var newRequest = new UserRequest
+            {
+                CompletionDateTime = DateTime.Now,
+                Description = _newRequestDescription,
+                RequestedBy = _selectedUserId.ToString(),
+            };
+        DbContext.UserRequests.Add(newRequest);
+        DbContext.SaveChanges();
+        UserRequestsList = DbContext.UserRequests.ToList();
+        await _createDialog.CloseAsync();
+    }
+
+    private void EditRequest(UserRequest request)
+    {   
+    }
+
+    private void DeleteRequest(UserRequest request)
+    {
+        DbContext.UserRequests.Remove(request);
+        DbContext.SaveChanges();
+        UserRequestsList = DbContext.UserRequests.Where(r => r.RequestId == request.RequestId).ToList();
+    }
+}

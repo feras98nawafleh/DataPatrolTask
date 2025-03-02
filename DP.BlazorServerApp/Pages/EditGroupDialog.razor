@@ -1,0 +1,43 @@
+﻿@using DP.Core.Entities
+@using DP.Infrastructure.Data
+@using MudBlazor
+
+<MudDialog>
+    <DialogContent>
+        <MudTextField @bind-Value="GroupId" Label="Group ID" />
+        <MudTextField @bind-Value="Description" Label="Description" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Submit">Save</MudButton>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; }
+    [Inject] private AppDbContext DbContext { get; set; }
+    [Parameter] public Group Group { get; set; }
+
+    private string GroupId { get; set; }
+    private string Description { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        GroupId = Group.GroupId;
+        Description = Group.Description;
+    }
+
+    private async Task Submit()
+    {
+        Group.GroupId = GroupId;
+        Group.Description = Description;
+        DbContext.Groups.Update(Group);
+        await DbContext.SaveChangesAsync();
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+}

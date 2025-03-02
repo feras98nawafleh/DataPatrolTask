@@ -1,0 +1,80 @@
+﻿@page "/user-groups"
+@using DP.Core.Entities
+@using DP.Infrastructure.Data
+@using MudBlazor
+@using Microsoft.EntityFrameworkCore
+@inject AppDbContext DbContext
+@inject IDialogService DialogService
+<MudDialogProvider />
+
+<h3>User Groups Management</h3>
+
+<MudTable Items="@UserGroupsList" Hover="true" Striped="true">
+    <ToolBarContent>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="OpenCreateDialog">Create User Group</MudButton>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>User ID</MudTh>
+        <MudTh>Group ID</MudTh>
+        <MudTh>Actions</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="User ID">@context.UserId</MudTd>
+        <MudTd DataLabel="Group ID">@context.GroupId</MudTd>
+        <MudTd DataLabel="Actions">
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" OnClick="() => OpenEditDialog(context)" />
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="() => DeleteUserGroup(context)" />
+            <MudIconButton Icon="@Icons.Material.Filled.GroupAdd" Color="Color.Secondary" OnClick="() => AssignUsers(context)" />
+            <MudIconButton Icon="@Icons.Material.Filled.Policy" Color="Color.Tertiary" OnClick="() => AssignPolicies(context)" />
+        </MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    private List<UserGroup> UserGroupsList = new List<UserGroup>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        UserGroupsList = await DbContext.UserGroups.ToListAsync();
+    }
+
+    private async Task OpenCreateDialog()
+    {
+        var dialog = DialogService.Show<CreateUserGroupDialog>("Create User Group");
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            UserGroupsList = await DbContext.UserGroups.ToListAsync();
+        }
+    }
+
+    private async Task OpenEditDialog(UserGroup userGroup)
+    {
+        var parameters = new DialogParameters { ["UserGroup"] = userGroup };
+        var dialog = DialogService.Show<EditUserGroupDialog>("Edit User Group", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            UserGroupsList = await DbContext.UserGroups.ToListAsync();
+        }
+    }
+
+    private async Task DeleteUserGroup(UserGroup userGroup)
+    {
+        DbContext.UserGroups.Remove(userGroup);
+        await DbContext.SaveChangesAsync();
+        UserGroupsList = await DbContext.UserGroups.ToListAsync();
+    }
+
+    private async Task AssignUsers(UserGroup userGroup)
+    {
+        await Task.CompletedTask;
+    }
+
+    private async Task AssignPolicies(UserGroup userGroup)
+    {
+        await Task.CompletedTask;
+    }
+}

@@ -1,0 +1,82 @@
+﻿@page "/users"
+@using DP.Core.Entities
+@using DP.Infrastructure.Data
+@using MudBlazor
+@using Microsoft.EntityFrameworkCore
+@inject AppDbContext DbContext
+@inject IDialogService DialogService
+<MudDialogProvider />
+<h3>Users Management</h3>
+<MudButton @onclick="OpenAddUserDialogAsync" Variant="Variant.Filled" Color="Color.Primary">
+    Add USer
+</MudButton>
+<MudTable Items="@UsersList" Hover="true" Striped="true">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Manage Users</MudText>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>UserId</MudTh>
+        <MudTh>Username</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="ID">@context.UserId</MudTd>
+        <MudTd DataLabel="Name">@context.Username</MudTd>
+        <MudTd DataLabel="Status">
+            @if (context.IsEnabled)
+            {
+                <MudChip T="string" Color="Color.Error">Active</MudChip>
+            }
+            else
+            {
+                <MudChip T="string" Color="Color.Success">Disabled</MudChip>
+            }
+        </MudTd>
+        <MudTd DataLabel="Actions">
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="() => DeleteUser(context)" />
+            <MudIconButton Icon="@Icons.Material.Filled.Block" Color="Color.Warning" OnClick="() => DisableUser(context)" />
+            <MudIconButton Icon="@Icons.Material.Filled.GroupAdd" Color="Color.Primary" OnClick="() => AssignUserGroups(context)" />
+        </MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    private List<User> UsersList = new List<User>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        UsersList = await DbContext.Users.ToListAsync();
+    }
+
+    private async Task DeleteUser(User user)
+    {
+        DbContext.Users.Remove(user);
+        await DbContext.SaveChangesAsync();
+        UsersList = await DbContext.Users.ToListAsync();
+    }
+
+    private async Task DisableUser(User user)
+    {
+        user.IsEnabled = !user.IsEnabled;
+        DbContext.Users.Update(user);
+        await DbContext.SaveChangesAsync();
+        UsersList = await DbContext.Users.ToListAsync();
+    }
+
+    private async Task AssignUserGroups(User user)
+    {
+        await Task.CompletedTask;
+    }
+
+    private async Task OpenAddUserDialogAsync()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+
+        var dialog = await DialogService.ShowAsync<AddUserDialog>("Simple Dialog", options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            UsersList = await DbContext.Users.ToListAsync();
+        }
+    }
+}

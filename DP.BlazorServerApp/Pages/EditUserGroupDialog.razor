@@ -1,0 +1,51 @@
+﻿@using DP.Core.Entities
+@using DP.Infrastructure.Data
+@using MudBlazor
+@using Microsoft.EntityFrameworkCore
+
+<MudDialog>
+    <DialogContent>
+        <MudTextField @bind-Value="UserId" Label="User ID" />
+        <MudSelect @bind-Value="GroupId" Label="Group">
+            @foreach (var group in Groups)
+            {
+                <MudSelectItem Value="@group.GroupId">@group.Description</MudSelectItem>
+            }
+        </MudSelect>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Submit">Save</MudButton>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; }
+    [Inject] private AppDbContext DbContext { get; set; }
+    [Parameter] public UserGroup UserGroup { get; set; }
+
+    private string UserId { get; set; }
+    private string GroupId { get; set; }
+    private List<Group> Groups { get; set; } = new List<Group>();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        UserId = UserGroup.UserId;
+        GroupId = UserGroup.GroupId;
+        Groups = await DbContext.Groups.ToListAsync();
+    }
+
+    private async Task Submit()
+    {
+        UserGroup.UserId = UserId;
+        UserGroup.GroupId = GroupId;
+        DbContext.UserGroups.Update(UserGroup);
+        await DbContext.SaveChangesAsync();
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+}

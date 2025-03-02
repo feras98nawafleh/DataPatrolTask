@@ -1,0 +1,69 @@
+﻿@page "/groups"
+@using DP.Core.Entities
+@using DP.Infrastructure.Data
+@using MudBlazor
+@using Pages
+@using Microsoft.EntityFrameworkCore
+@inject AppDbContext DbContext
+@inject IDialogService DialogService
+@using DP.BlazorServerApp.Pages
+
+<h3>Groups Management</h3>
+
+<MudTable Items="@GroupsList" Hover="true" Striped="true">
+    <ToolBarContent>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="OpenCreateDialog">Create Group</MudButton>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>Group ID</MudTh>
+        <MudTh>Description</MudTh>
+        <MudTh>Actions</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Group ID">@context.GroupId</MudTd>
+        <MudTd DataLabel="Description">@context.Description</MudTd>
+        <MudTd DataLabel="Actions">
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" OnClick="() => OpenEditDialog(context)" />
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="() => DeleteGroup(context)" />
+        </MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    private List<Group> GroupsList = new List<Group>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        GroupsList = await DbContext.Groups.ToListAsync();
+    }
+
+    private async Task OpenCreateDialog()
+    {
+        var dialog = await DialogService.ShowAsync<CreateGroupDialog>("Create Group");
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            GroupsList = await DbContext.Groups.ToListAsync();
+        }
+    }
+
+    private async Task OpenEditDialog(Group group)
+    {
+        var parameters = new DialogParameters { ["Group"] = group };
+        var dialog = await DialogService.ShowAsync<EditGroupDialog>("Edit Group", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            GroupsList = await DbContext.Groups.ToListAsync();
+        }
+    }
+
+    private async Task DeleteGroup(Group group)
+    {
+        DbContext.Groups.Remove(group);
+        await DbContext.SaveChangesAsync();
+        GroupsList = await DbContext.Groups.ToListAsync();
+    }
+}
