@@ -125,6 +125,7 @@ app.UseHttpsRedirection();
 
 app.UseMiddleware<LoggingMiddleware>();
 app.UseMiddleware<CorsMiddleware>();
+//app.UseMiddleware<TenantMiddleware>();
 app.UseMiddleware<AuthorizationMiddleware>();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 

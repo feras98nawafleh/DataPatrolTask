@@ -1,22 +1,54 @@
 ﻿using DP.Core.Entities;
 using Microsoft.EntityFrameworkCore;
-using System.Reflection.Metadata;
-
+using Microsoft.AspNetCore.Http;
+using DP.Core.Models;
 namespace DP.Infrastructure.Data
 {
     public class AppDbContext : DbContext
     {
-        public AppDbContext(DbContextOptions<AppDbContext> options)
-            : base(options)
-        {
-        }
-
+        private readonly string _tenantId;
         public DbSet<User> Users { get; set; }
         public DbSet<Policy> Policies { get; set; }
         public DbSet<Group> Groups { get; set; }
         public DbSet<UserGroup> UserGroups { get; set; }
         public DbSet<UserRequest> UserRequests { get; set; }
         public DbSet<GroupPolicy> GroupPolicies { get; set; }
+
+        public AppDbContext(DbContextOptions<AppDbContext> options)
+        : base(options)
+        {
+        }
+
+        public AppDbContext(DbContextOptions<AppDbContext> options, IHttpContextAccessor httpContextAccessor)
+        : base(options)
+        {
+            _tenantId = httpContextAccessor.HttpContext?.Items["TenantId"] as string;
+        }
+
+
+        //public override int SaveChanges()
+        //{
+        //    foreach (var entry in ChangeTracker.Entries())
+        //    {
+        //        if (entry.Entity is ITenantEntity tenantEntity)
+        //        {
+        //            tenantEntity.TenantId = _tenantId;
+        //        }
+        //    }
+        //    return base.SaveChanges();
+        //}
+
+        //public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        //{
+        //    foreach (var entry in ChangeTracker.Entries())
+        //    {
+        //        if (entry.Entity is ITenantEntity tenantEntity)
+        //        {
+        //            tenantEntity.TenantId = _tenantId;
+        //        }
+        //    }
+        //    return base.SaveChangesAsync(cancellationToken);
+        //}
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
